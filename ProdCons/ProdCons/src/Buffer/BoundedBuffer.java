@@ -1,4 +1,9 @@
 package Buffer;
+<<<<<<< HEAD
+=======
+//The z commit is here 
+//the z laptop commit is here
+>>>>>>> fe9be377f559dd0ee9ae553a1d9ba2a7b19f0c1e
 
 public class BoundedBuffer implements Buffer
 { 
