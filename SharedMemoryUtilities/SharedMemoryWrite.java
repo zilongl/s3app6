@@ -23,7 +23,7 @@ public class SharedMemoryWrite
       int handle = Integer.parseInt(memory_addres);
 
 
-      String buffer[]= {"ABCD","BCDEF","CD","D","EFGHI"};
+      String buffer[]= {"ZI","LONG","IS","THE","MAN"};
       System.out.println("On commence a envoyer des strings a stocker...");
 	  for (int i=0; i<5; i++)
 	  {

@@ -15,7 +15,7 @@ public class Consumer implements Runnable
      while (true)
       {
          System.out.println("CONSOMMATEUR: En train de dormir...");
-	 SleepTools.nap(); 
+	      SleepTools.nap(); 
          
          System.out.println("CONSOMMATEUR: Pret à consommer...");
            
