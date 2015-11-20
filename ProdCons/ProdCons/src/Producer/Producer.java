@@ -4,22 +4,35 @@ import Tools.SleepTools;
 
 public class Producer implements Runnable
 {
+   int number;
+
    public Producer(Buffer b) {
       buffer = b;
+   }
+
+   public Producer(Buffer b, int number) {
+      buffer = b;
+      this.number = number;
    }
    
    public void run()
    {
    String message;
-     
+      int i=0;
       while (true) {
-         System.out.println("PRODUCTEUR: En train de dormir...");
-	 SleepTools.nap();
+         System.out.println("PRODUCTEUR "+number+" : En train de dormir...");
+	      //SleepTools.nap();
 
-         message = new String("Produit...");      
-         System.out.println("PRODUCTEUR: Message produit " + message);
+         //controled nap
+         try { Thread.sleep(1000); }
+         catch (InterruptedException e) {}
+
+         message = new String("Produit no " + i + " ");      
+         System.out.println("PRODUCTEUR "+number+" :Message produit " + message);
            
          buffer.insert(message);
+
+         i++;
       }
    }
    

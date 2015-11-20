@@ -8,10 +8,14 @@ public class Server
 		Buffer server = new BoundedBuffer();
 
       		// now create the producer and consumer threads
-      		Thread producerThread = new Thread(new Producer(server));
-      		Thread consumerThread = new Thread(new Consumer(server));
+      		Thread producerThread = new Thread(new Producer(server,1));
+      		Thread producerThread2 = new Thread(new Producer(server,2));
+      		Thread consumerThread = new Thread(new Consumer(server,1));
+      		Thread consumerThread2 = new Thread(new Consumer(server,2));
       
       		producerThread.start();
-      		consumerThread.start();               
+      		producerThread2.start();
+      		consumerThread.start();         
+      		consumerThread2.start();        
 	}
 }
