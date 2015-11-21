@@ -4,15 +4,15 @@ import SharedMemoryUtilities.SharedMemory;
 
 public class BoundedBuffer implements Buffer
 { 
-   private static final int   BUFFER_SIZE = 3;
+   public static final int   BUFFER_SIZE = 3;
 
-   private final int IN = 0;   // points to the next free position in the buffer
-   private final int OUT = 1;  // points to the next full position in the buffer
-   private final int LOAD = 2;
-   private final int SPACE = 3;
-   private final int LOCKCONSUMER = 4;
-   private final int LOCKPRODUCER = 5;
-   private final int BUFFER_BEGIN = 6;
+   public static final int IN = 0;   // points to the next free position in the buffer
+   public static final int OUT = 1;  // points to the next full position in the buffer
+   public static final int LOAD = 2;
+   public static final int SPACE = 3;
+   public static final int LOCKCONSUMER = 4;
+   public static final int LOCKPRODUCER = 5;
+   public static final int BUFFER_BEGIN = 6;
    private int in;
    private int out;
    private int handle;
@@ -37,23 +37,26 @@ public class BoundedBuffer implements Buffer
       handle = Integer.parseInt(memory_address);
 
       // variables initialisation 
-      in = 0;
-      out = 0;
+      in = readIntFromSharedMemory(IN);
+      out = readIntFromSharedMemory(OUT);
+
+      /* initialisation dans SharedMemoryCreateBuffer à la place 
+
       writeIntToSharedMemory(IN, 0); //in = 0;
       writeIntToSharedMemory(OUT, 0); //out = 0;
       writeIntToSharedMemory(LOAD, 0); //load = 0;
       writeIntToSharedMemory(SPACE, BUFFER_SIZE); //space = BUFFER_SIZE;
       writeIntToSharedMemory(LOCKCONSUMER, 1); //lockConsumer = 1;
-      writeIntToSharedMemory(LOCKPRODUCER, 1); //lockProducer = 1; 
+      writeIntToSharedMemory(LOCKPRODUCER, 1); //lockProducer = 1; */
    }
 
    // producer calls this method
    public void insert(String item) {
 
       try{
+      waitShared(SPACE); // space before lock because the lock can still be on when we stop the process
       waitShared(LOCKPRODUCER);
-      waitShared(SPACE);
-
+      
       writeToSharedMemory(in+BUFFER_BEGIN, item);
       in = (in + 1) % BUFFER_SIZE;
 
@@ -97,8 +100,8 @@ public class BoundedBuffer implements Buffer
       String item = " ";
 
       try{
-      waitShared(LOCKCONSUMER);
       waitShared(LOAD);
+      waitShared(LOCKCONSUMER);
 
       item = readFromSharedMemory(out+BUFFER_BEGIN);
       out = (out + 1) % BUFFER_SIZE;

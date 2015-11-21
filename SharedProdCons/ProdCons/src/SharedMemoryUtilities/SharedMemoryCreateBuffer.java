@@ -1,5 +1,6 @@
 package SharedMemoryUtilities;
 
+import static Buffer.BoundedBuffer.*;
 import java.io.*;
 
 
@@ -17,7 +18,14 @@ public class SharedMemoryCreateBuffer
       System.out.println("Allocation de la memoire");
 	   int handle = sm.alloc(9,15);
 
-	   sm.displaySharedMemory(handle);
+     sm.write(handle, IN, "0"); //in = 0;
+     sm.write(handle, OUT, "0"); //out = 0;
+     sm.write(handle, LOAD, "0"); //load = 0;
+     sm.write(handle, SPACE, Integer.toString(BUFFER_SIZE)); //space = BUFFER_SIZE;
+     sm.write(handle, LOCKCONSUMER, "1"); //lockConsumer = 1;
+     sm.write(handle, LOCKPRODUCER, "1"); //lockProducer = 1; 
+
+     sm.displaySharedMemory(handle);
 
 	   InputStreamReader converter = new InputStreamReader (System.in);
 	   BufferedReader		in = new BufferedReader (converter);

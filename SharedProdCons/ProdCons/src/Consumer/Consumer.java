@@ -26,7 +26,7 @@ public class Consumer implements Runnable
 	      //SleepTools.nap(); 
 
          //controled nap
-         try { Thread.sleep(1000); }
+         try { Thread.sleep(1500); }
          catch (InterruptedException e) {}
          
          System.out.println("CONSOMMATEUR "+number+" : Pret a consommer...");
