@@ -1,4 +1,3 @@
-import SharedMemoryUtilities.SharedBuffer;
 import Buffer.Buffer;
 import Buffer.BoundedBuffer;
 import Consumer.Consumer;

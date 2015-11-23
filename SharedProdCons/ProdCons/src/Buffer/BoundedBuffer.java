@@ -1,35 +1,31 @@
 package Buffer;
 
+import ConcurrenceControl.*;
 import SharedMemoryUtilities.SharedMemory;
 
 public class BoundedBuffer implements Buffer
 { 
    public static final int   BUFFER_SIZE = 3;
 
-   public static final int IN = 0;   // points to the next free position in the buffer
-   public static final int OUT = 1;  // points to the next full position in the buffer
-   public static final int LOAD = 2;
-   public static final int SPACE = 3;
-   public static final int LOCKCONSUMER = 4;
-   public static final int LOCKPRODUCER = 5;
-   public static final int BUFFER_BEGIN = 6;
-   private int in;
-   private int out;
+   public static final int CONSUMER = 0; 
+   public static final int PRODUCER = 1;  
+   public static final int TURN = 0;   
+   public static final int LOAD = 1;
+   public static final int SPACE = 2;
+   public static final int BUFFER_BEGIN = 3;
+   private volatile int in;  // points to the next free position in the buffer
+   private volatile int out; // points to the next full position in the buffer
    private int handle;
-   private SharedMemory sm = new SharedMemory();
+   ConcurrenceControlPeterson control = new ConcurrenceControlPeterson();
 
    /*Shared memory cases 
-   0: in=0;
-   1: out=0;
+   0: TURN=0;
    
-   count-->divided in 2 semaphores
-   2: semaphore load = 0;
-   3: semaphore space = N;
+   count-->divided in 2 
+   1: load = 0; number of product loaded (Consumer aquiring load)
+   2: space = N; number of space left (Producer aquiring space)
 
-   4: semaphore lockConsumer = 0;
-   5: semaphore lockProducer = 0;
-
-   6+N : table with N+1 cases
+   3+N : table with N+1 cases
    */
 
    public BoundedBuffer(String memory_address)
@@ -37,33 +33,22 @@ public class BoundedBuffer implements Buffer
       handle = Integer.parseInt(memory_address);
 
       // variables initialisation 
-      in = readIntFromSharedMemory(IN);
-      out = readIntFromSharedMemory(OUT);
-
-      /* initialisation dans SharedMemoryCreateBuffer à la place 
-
-      writeIntToSharedMemory(IN, 0); //in = 0;
-      writeIntToSharedMemory(OUT, 0); //out = 0;
-      writeIntToSharedMemory(LOAD, 0); //load = 0;
-      writeIntToSharedMemory(SPACE, BUFFER_SIZE); //space = BUFFER_SIZE;
-      writeIntToSharedMemory(LOCKCONSUMER, 1); //lockConsumer = 1;
-      writeIntToSharedMemory(LOCKPRODUCER, 1); //lockProducer = 1; */
+      in = 0;
+      out = 0;
    }
 
    // producer calls this method
-   public void insert(String item) {
+   public synchronized void insert(String item) {
 
       try{
-         waitShared(SPACE); // space before lock because the lock can still be on when we stop the process
-         waitShared(LOCKPRODUCER);
-         
-         writeToSharedMemory(in+BUFFER_BEGIN, item);
+         control.acquire(handle, PRODUCER);
+         System.out.println("AQUIRED");
+         SharedMemory.write(handle, (in+BUFFER_BEGIN), item);
          in = (in + 1) % BUFFER_SIZE;
 
-         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete enmagasine. Il y a = " +  (readIntFromSharedMemory(LOAD)+1) + " produits.");
+         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete enmagasine. Il y a = " +  (readIntFromSharedMemory(handle, LOAD)+1) + " produits.");
 
-         signalShared(LOAD);
-         signalShared(LOCKPRODUCER);
+         control.release(handle, LOAD);
       }
       catch(Throwable t){
          System.out.println(t);
@@ -94,21 +79,19 @@ public class BoundedBuffer implements Buffer
    }
    
    // consumer calls this method
-   public String remove() {
+   public synchronized String remove() {
 
       String item = " ";
 
       try{
-         waitShared(LOAD);
-         waitShared(LOCKCONSUMER);
+         control.acquire(handle, CONSUMER);
 
-         item = readFromSharedMemory(out+BUFFER_BEGIN);
+         item = SharedMemory.read(handle, (out+BUFFER_BEGIN));
          out = (out + 1) % BUFFER_SIZE;
          
-         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete consomme. Il y a = " +  readIntFromSharedMemory(LOAD) + " produits.");
+         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete consomme. Il y a = " +  readIntFromSharedMemory(handle, LOAD) + " produits.");
 
-         signalShared(SPACE);
-         signalShared(LOCKCONSUMER);
+         control.release(handle, SPACE);
       }
       catch(Throwable t)
       {
@@ -146,40 +129,12 @@ public class BoundedBuffer implements Buffer
       return item;
       */
    }
-
-   // basic Semaphores functions
-   public int wait(int semaphore){
-      while (semaphore <= 0)
-         ; // do nothing
-      return semaphore-1;
-   }
-   public int signal(int semaphore){
-      return semaphore+1;
-   }
-
-   //Complex Semaphores methods
-   public void waitShared(int position){
-      while (readIntFromSharedMemory(position) <= 0)
-         ;// do nothing
-      writeIntToSharedMemory(position, readIntFromSharedMemory(position)-1);
-   }
-   public void signalShared(int position){
-      writeIntToSharedMemory(position, readIntFromSharedMemory(position)+1);
-   }
-
-   //Reading and writing methods
-   public void writeToSharedMemory(int position, String chain){
-      sm.write(handle, position, chain);
-   }
-   public void writeIntToSharedMemory(int position, int value){
+      //Reading and writing methods
+   public static void writeIntToSharedMemory(int handle, int position, int value){
       String stringValue = Integer.toString(value);
-      sm.write(handle, position, stringValue);
+      SharedMemory.write(handle, position, stringValue);
    }
-   public String readFromSharedMemory(int position){
-      return sm.read(handle, position);
+   public static int readIntFromSharedMemory(int handle, int position){
+      return Integer.parseInt(SharedMemory.read(handle, position));
    }
-   public int readIntFromSharedMemory(int position){
-      return Integer.parseInt(sm.read(handle, position));
-   }
-
 }
