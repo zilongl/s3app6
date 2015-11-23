@@ -7,14 +7,14 @@ public class BoundedBuffer implements Buffer
 { 
    public static final int   BUFFER_SIZE = 3;
 
-   public static final int PRODUCER = 1; 
-   public static final int CONSUMER = 0; 
-   public static final int TURN = 0;   
-   public static final int LOAD = 1;
-   public static final int SPACE = 2;
-   public static final int BUFFER_BEGIN = 3;
+   public static final int PRODUCER = 0; 
+   public static final int CONSUMER = 1; 
+   public static final int TURN = 2;   
+   public static final int COUNT = 3;
+   public static final int BUFFER_BEGIN = 4;
    private volatile int in;  // points to the next free position in the buffer
    private volatile int out; // points to the next full position in the buffer
+   private volatile int count;
    private int handle;
    ConcurrenceControlPeterson control = new ConcurrenceControlPeterson();
 
@@ -35,20 +35,31 @@ public class BoundedBuffer implements Buffer
       // variables initialisation 
       in = 0;
       out = 0;
+      count = 0;
    }
 
    // producer calls this method
    public synchronized void insert(String item) {
 
       try{
-         control.acquire(handle, PRODUCER);
+         boolean full = false;
+         while (full == false || count >= 3){
+            control.acquire(handle, PRODUCER);
+            count = readIntFromSharedMemory(handle, COUNT); // critical section
+            control.release(handle, PRODUCER);
+            Thread.sleep(1);
+            full = true;
+         }
+
          System.out.println("AQUIRED");
          SharedMemory.write(handle, (in+BUFFER_BEGIN), item);
          in = (in + 1) % BUFFER_SIZE;
 
-         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete enmagasine. Il y a = " +  (readIntFromSharedMemory(handle, LOAD)+1) + " produits.");
+         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete enmagasine. Il y a = " + (count+1) + " produits.");
 
-         control.release(handle, LOAD);
+         control.acquire(handle, PRODUCER);
+         writeIntToSharedMemory(handle, COUNT, (count+1)); // critical section
+         control.release(handle, PRODUCER);
       }
       catch(Throwable t){
          System.out.println(t);
@@ -84,14 +95,26 @@ public class BoundedBuffer implements Buffer
       String item = " ";
 
       try{
-         control.acquire(handle, CONSUMER);
+         boolean empty = false;
+
+         while (empty == false || count <=0){
+            control.acquire(handle, CONSUMER);
+            count = readIntFromSharedMemory(handle, COUNT); // critical section
+            control.release(handle, CONSUMER);
+            Thread.sleep(1);
+            empty = true;
+         }
 
          item = SharedMemory.read(handle, (out+BUFFER_BEGIN));
          out = (out + 1) % BUFFER_SIZE;
          
-         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete consomme. Il y a = " +  readIntFromSharedMemory(handle, LOAD) + " produits.");
+         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete consomme. Il y a = " +  (count-1) + " produits.");
 
-         control.release(handle, SPACE);
+         control.acquire(handle, CONSUMER);
+         writeIntToSharedMemory(handle, COUNT, (count-1)); // critical section
+         control.release(handle, CONSUMER);
+
+         
       }
       catch(Throwable t)
       {

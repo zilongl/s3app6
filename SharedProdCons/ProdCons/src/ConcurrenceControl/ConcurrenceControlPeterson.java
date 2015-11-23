@@ -11,12 +11,9 @@ public class ConcurrenceControlPeterson implements ConcurrenceControl{
   	@Override
 	public synchronized void acquire(int handle, int process){
 		int other = 1-process;
-		int position = process + 1;
-		int positionOther = other + 1;
 		writeIntToSharedMemory(handle, TURN, process);
-		System.out.println("WRITED PROCESS IN TURN");
-		System.out.println(SharedMemory.read(handle, positionOther) + "       " + SharedMemory.read(handle, TURN));
-		while (readIntFromSharedMemory(handle, positionOther) <= 0 && readIntFromSharedMemory(handle, TURN) == process){
+		writeIntToSharedMemory(handle, process, 1);
+		while (readIntFromSharedMemory(handle, other) == 1 && readIntFromSharedMemory(handle, TURN) == process){
 			try{
 				//System.out.println("WAIT");
 				Thread.sleep(1);
@@ -25,14 +22,11 @@ public class ConcurrenceControlPeterson implements ConcurrenceControl{
 				e.printStackTrace();
 			}
 		}
-		writeIntToSharedMemory(handle, position, readIntFromSharedMemory(handle, position)-1);
-		System.out.println("WRITED-1");
 	}
 
 	@Override
 	public synchronized void release(int handle, int position){
-		writeIntToSharedMemory(handle, position, readIntFromSharedMemory(handle, position)+1);
-		System.out.println(readIntFromSharedMemory(handle, position));
+		writeIntToSharedMemory(handle, position, 0);
 	}
 
    //Reading and writing methods

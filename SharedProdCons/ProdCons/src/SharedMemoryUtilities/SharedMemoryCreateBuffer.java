@@ -16,11 +16,12 @@ public class SharedMemoryCreateBuffer
       SharedMemory sm = new SharedMemory();
 
       System.out.println("Allocation de la memoire");
-	   int handle = sm.alloc(BUFFER_SIZE+3, 15);
+	   int handle = sm.alloc(BUFFER_SIZE+4, 15);
 
-     sm.write(handle, TURN, "0"); //in = 0;
-     sm.write(handle, LOAD, "0"); //load = 0;
-     sm.write(handle, SPACE, Integer.toString(BUFFER_SIZE)); //space = BUFFER_SIZE;
+     sm.write(handle, PRODUCER, "0"); //producer = 0;
+     sm.write(handle, CONSUMER, "0"); //consumer = 0;
+     sm.write(handle, TURN, "0"); //turn = 0;
+     sm.write(handle, COUNT, "0"); //turn = 0;
 
      sm.displaySharedMemory(handle);
 
