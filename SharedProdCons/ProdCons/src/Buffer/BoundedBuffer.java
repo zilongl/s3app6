@@ -7,8 +7,8 @@ public class BoundedBuffer implements Buffer
 { 
    public static final int   BUFFER_SIZE = 3;
 
+   public static final int PRODUCER = 1; 
    public static final int CONSUMER = 0; 
-   public static final int PRODUCER = 1;  
    public static final int TURN = 0;   
    public static final int LOAD = 1;
    public static final int SPACE = 2;
