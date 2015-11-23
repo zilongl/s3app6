@@ -54,20 +54,19 @@ public class BoundedBuffer implements Buffer
    public void insert(String item) {
 
       try{
-      waitShared(SPACE); // space before lock because the lock can still be on when we stop the process
-      waitShared(LOCKPRODUCER);
-      
-      writeToSharedMemory(in+BUFFER_BEGIN, item);
-      in = (in + 1) % BUFFER_SIZE;
+         waitShared(SPACE); // space before lock because the lock can still be on when we stop the process
+         waitShared(LOCKPRODUCER);
+         
+         writeToSharedMemory(in+BUFFER_BEGIN, item);
+         in = (in + 1) % BUFFER_SIZE;
 
-      System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete enmagasine. Il y a = " +  (readIntFromSharedMemory(LOAD)+1) + " produits.");
+         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete enmagasine. Il y a = " +  (readIntFromSharedMemory(LOAD)+1) + " produits.");
 
-      signalShared(LOAD);
-      signalShared(LOCKPRODUCER);
+         signalShared(LOAD);
+         signalShared(LOCKPRODUCER);
       }
-      catch(Throwable t)
-      {
-      System.out.println(t);
+      catch(Throwable t){
+         System.out.println(t);
       }
 
       /*
@@ -100,20 +99,20 @@ public class BoundedBuffer implements Buffer
       String item = " ";
 
       try{
-      waitShared(LOAD);
-      waitShared(LOCKCONSUMER);
+         waitShared(LOAD);
+         waitShared(LOCKCONSUMER);
 
-      item = readFromSharedMemory(out+BUFFER_BEGIN);
-      out = (out + 1) % BUFFER_SIZE;
-      
-      System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete consomme. Il y a = " +  readIntFromSharedMemory(LOAD) + " produits.");
+         item = readFromSharedMemory(out+BUFFER_BEGIN);
+         out = (out + 1) % BUFFER_SIZE;
+         
+         System.out.println("BOUNDEDBUFFER: Le produit " + item + "a ete consomme. Il y a = " +  readIntFromSharedMemory(LOAD) + " produits.");
 
-      signalShared(SPACE);
-      signalShared(LOCKCONSUMER);
+         signalShared(SPACE);
+         signalShared(LOCKCONSUMER);
       }
       catch(Throwable t)
       {
-      System.out.println(t);
+         System.out.println(t);
       }
 
       return item;
